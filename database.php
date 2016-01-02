@@ -69,6 +69,11 @@ class Database extends PDO
      */
     public function select($sql, $array = array(), $fetchMode = PDO::FETCH_OBJ, $class = '')
     {
+         // Append select if it isn't appended.
+        if (strtolower(substr($sql, 0, 7)) !== 'select ') {
+            $sql = "SELECT " . $sql;
+        }
+        
         $stmt = $this->prepare($sql);
         foreach ($array as $key => $value) {
             if (is_int($value)) {
