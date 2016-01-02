@@ -39,13 +39,13 @@ $db = Database::get(array(
 ##Select:
 
 ````
-$db->select("SELECT column FROM table");
+$db->select("column FROM table");
 ````
 
 To select data based on user data instead of passing the data to the query directly use a prepared statement, this is safer and stops any attempt at sql injections.
 
 ````
-$db->select("SELECT username FROM members WHERE memberID = :id and email = :email", array(':id' => 1, ':email' => 'someone@domain.com'));
+$db->select("username FROM members WHERE memberID = :id and email = :email", array(':id' => 1, ':email' => 'someone@domain.com'));
 ````
 
 The above query will return the username from the members table where the memberID and email match. The memberID and email is passed seperartly in an array.
@@ -57,7 +57,7 @@ Data returned from the query will be returns as an object this can be changed by
 To use the object loop through it, a typical example:
 
 ````
-$rows = $db->select("SELCET * FROM members ORDER BY firstName, lastName");
+$rows = $db->select("firstName, lastName FROM members ORDER BY firstName, lastName");
 foreach ($rows as $row) {
     echo "<p>$row->firstName $row->lastName</p>";
 }
