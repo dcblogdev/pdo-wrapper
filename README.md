@@ -4,7 +4,7 @@ This PDO wrapper, is a collection of crud methods for working with a database th
 
 ##Install
 
-To install place this class into the project folder and include the class, the set the db credentials. Finally create an instance of the classes by calling it's get method.
+To install place this class into the project folder and include the class, then set the db credentials. Finally create an instance of the classes by calling it's get method.
 
 This wrapper makes use of a single database connection further connections attempts will reuse the already open connections, if not already connected.
 
@@ -50,6 +50,8 @@ $db->select("SELECT username FROM members WHERE memberID = :id and email = :emai
 
 The above query will return the username from the members table where the memberID and email match. The memberID and email is passed seperartly in an array.
 
+Instead of passing in an id and email to the query directly a placeholder is used :id and :email then an array is passed the keys in the array matches the placeholder and is bound, so the database will get both the query and the bound data.
+
 Data returned from the query will be returns as an object this can be changed by passing a third param to the select containing PDO::FETCH_ASSOC.
 
 To use the object loop through it, a typical example:
@@ -63,13 +65,14 @@ foreach ($rows as $row) {
 
 #Raw
 
-A raw query is a query that is not ran through a prepared statement and will execute the query passed directly. Useful when crating a table.
+A raw query is a query that is not ran through a prepared statement and will execute the query passed directly. Useful when creating a table.
 
 ````
 $db->raw("CREATE TABLE IF NOT EXISTS members (
   memberID INT(11) NOT NULL AUTO_INCREMENT,
-  username VARCHAR(255) NOT NULL,
-  password VARCHAR(255) NOT NULL,
+  firstName VARCHAR(255) NOT NULL,
+  lastnName VARCHAR(255) NOT NULL,
+  email VARCHAR(255) NOT NULL,
   PRIMARY KEY (memberID))"
 );
 ````
