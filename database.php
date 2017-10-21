@@ -45,6 +45,7 @@ class Database extends PDO
         // Setting Database into $instances to avoid duplication
         self::$instances[$id] = $instance;
 
+        //return the pdo instance
         return $instance;
 
     }
@@ -73,7 +74,7 @@ class Database extends PDO
         if (strtolower(substr($sql, 0, 7)) !== 'select ') {
             $sql = "SELECT " . $sql;
         }
-        
+
         $stmt = $this->prepare($sql);
         foreach ($array as $key => $value) {
             if (is_int($value)) {
