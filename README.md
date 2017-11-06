@@ -116,7 +116,7 @@ To delete records call the delete method. This method expects the table name and
 
 ````php
 $where = array('memberID' => 2);
-$db->delect('members', $where);
+$db->delete('members', $where);
 ````
 
 This will delete a single record to set the limit pass a third parameters containing the number to limit to, or to remove the limit pass null as a third param.
