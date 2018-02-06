@@ -92,6 +92,16 @@ class Database extends PDO
             return $stmt->fetchAll($fetchMode);
         }
     }
+    
+    /**
+    * Count method
+    * @param  string $table table name
+    */
+    public function count($table) {
+        $stmt = $this->prepare("SELECT id FROM $table");
+        $stmt->execute();
+        return $stmt->rowCount();
+    }
 
     /**
      * insert method
