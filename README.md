@@ -109,6 +109,21 @@ $data = array(
 $where = array('memberID' => 2);
 $db->update('members', $data, $where);
 ````
+Or:
+
+```php
+$update = array( 
+	'data'=>array(
+	    'firstName' => 'Joe',
+	    'lastnName' => 'Smith',
+	    'email' => 'someone@domain.com'
+		),
+	'where'=> array('memberID' => 2)
+	);
+
+$db->update('members', $update['data'], $update['where']);
+
+```
 
 ## Delete
 
