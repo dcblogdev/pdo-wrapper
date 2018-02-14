@@ -96,11 +96,12 @@ class Database extends PDO
     /**
     * Count method
     * @param  string $table table name
+    * @param  string $column optional
     */
-    public function count($table) {
-        $stmt = $this->prepare("SELECT * FROM $table");
-        $stmt->execute();
-        return $stmt->rowCount();
+    public function count($table, $column= 'id') {
+            $stmt = $this->prepare("SELECT $column FROM $table");
+            $stmt->execute();		      
+            return $stmt->rowCount();
     }
 
     /**
