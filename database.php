@@ -98,7 +98,7 @@ class Database extends PDO
     * @param  string $table table name
     */
     public function count($table) {
-        $stmt = $this->prepare("SELECT id FROM $table");
+        $stmt = $this->prepare("SELECT * FROM $table");
         $stmt->execute();
         return $stmt->rowCount();
     }
