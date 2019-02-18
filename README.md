@@ -133,23 +133,13 @@ To delete records call the delete method. This method expects the table name and
 $where = array('memberID' => 2);
 $db->delete('members', $where);
 ````
-## Count
-
-To count records call the count method. This method expects the table name and column name (optional).
-
-````php
-$db->count('members');
-````
-If table has no column `id`
-````
-$db->count('members', 'member_id');
-````
 
 This will delete a single record to set the limit pass a third parameters containing the number to limit to, or to remove the limit pass null as a third param.
 
 ````php
 $db->delete('members', $where, 10);  //delete 10 records matcing the where
 $db->delete('members', $where, null); //delete all records matching the where
+```
 
 ## Truncate
 
@@ -158,3 +148,18 @@ To empty a table of all contents call the truncate method. Passing only the tabl
 ````php
 $db->truncate('members');
 ````
+
+
+## Count
+
+To count records call the count method. This method expects the table name and column name (optional).
+
+````php
+$db->count('members');
+````
+
+If table has no column `id`
+````
+$db->count('members', 'member_id');
+````
+
