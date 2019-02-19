@@ -63,6 +63,14 @@ foreach ($rows as $row) {
 }
 ````
 
+## Select Signle Record:
+
+Using find() will return only a single result. Like select it accepts params being passed in an array as a second argument.
+
+````php
+$db->find("column FROM table where id=:id", [':id' => 23]);
+````
+
 # Raw
 
 A raw query is a query that is not ran through a prepared statement and will execute the query passed directly. Useful when creating a table.
