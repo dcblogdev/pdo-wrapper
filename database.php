@@ -66,9 +66,10 @@ class Database extends PDO
      * @param  array  $array     named params
      * @param  object $fetchMode
      * @param  string $class     class name
+     * @param  string $single    when set will return only 1 record
      * @return array            returns an array of records
      */
-    public function select($sql, $array = array(), $fetchMode = PDO::FETCH_OBJ, $class = '')
+    public function select($sql, $array = array(), $fetchMode = PDO::FETCH_OBJ, $class = '', $single = null)
     {
          // Append select if it isn't appended.
         if (strtolower(substr($sql, 0, 7)) !== 'select ') {
@@ -86,22 +87,36 @@ class Database extends PDO
 
         $stmt->execute();
 
-        if ($fetchMode === PDO::FETCH_CLASS) {
-            return $stmt->fetchAll($fetchMode, $class);
+        if ($single == null) {
+            return $fetchMode === PDO::FETCH_CLASS ? $stmt->fetchAll($fetchMode, $class) : $stmt->fetchAll($fetchMode);
         } else {
-            return $stmt->fetchAll($fetchMode);
+            return $fetchMode === PDO::FETCH_CLASS ? $stmt->fetch($fetchMode, $class) : $stmt->fetch($fetchMode);
         }
     }
-    
+
+    /**
+     * Fetch a single record
+     * @param  string $sql       sql query
+     * @param  array  $array     named params
+     * @param  object $fetchMode
+     * @param  string $class     class name
+     * @return array            returns a single record
+     */
+    public function find($sql, $array = array(), $fetchMode = PDO::FETCH_OBJ, $class = '')
+    {
+        return $this->select($sql, $array, $fetchMode, $class, true);
+    }
+
     /**
     * Count method
     * @param  string $table table name
     * @param  string $column optional
     */
-    public function count($table, $column= 'id') {
-            $stmt = $this->prepare("SELECT $column FROM $table");
-            $stmt->execute();		      
-            return $stmt->rowCount();
+    public function count($table, $column= 'id')
+    {
+        $stmt = $this->prepare("SELECT $column FROM $table");
+        $stmt->execute();
+        return $stmt->rowCount();
     }
 
     /**
