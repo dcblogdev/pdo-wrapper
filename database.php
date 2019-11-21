@@ -153,7 +153,7 @@ class Database extends PDO
 
         $fieldDetails = null;
         foreach ($data as $key => $value) {
-            $fieldDetails .= "$key = :$key,";
+            $fieldDetails .= "$key = :d_$key,";
         }
         $fieldDetails = rtrim($fieldDetails, ',');
 
@@ -161,9 +161,9 @@ class Database extends PDO
         $i = 0;
         foreach ($where as $key => $value) {
             if ($i == 0) {
-                $whereDetails .= "$key = :$key";
+                $whereDetails .= "$key = :w_$key";
             } else {
-                $whereDetails .= " AND $key = :$key";
+                $whereDetails .= " AND $key = :w_$key";
             }
             $i++;
         }
@@ -172,11 +172,11 @@ class Database extends PDO
         $stmt = $this->prepare("UPDATE $table SET $fieldDetails WHERE $whereDetails");
 
         foreach ($data as $key => $value) {
-            $stmt->bindValue(":$key", $value);
+            $stmt->bindValue(":d_$key", $value);
         }
 
         foreach ($where as $key => $value) {
-            $stmt->bindValue(":$key", $value);
+            $stmt->bindValue(":w_$key", $value);
         }
 
         $stmt->execute();
