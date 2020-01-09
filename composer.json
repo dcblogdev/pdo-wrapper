@@ -1,0 +1,22 @@
+{
+    "name": "daveismyname/pdo-wrapper",
+    "description": "A crud wrapper for PDO",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "David Carr",
+            "email": "dave@daveismyname.com",
+            "homepage": "http://daveismyname.blog",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=7.2"
+    },
+    "autoload": {
+        "psr-4": {
+            "Daveismyname\\PdoWrapper\\": "/src"
+        }
+    },
+    "minimum-stability": "dev"
+}

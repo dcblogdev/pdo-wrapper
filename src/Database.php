@@ -1,45 +1,32 @@
 <?php
+namespace Daveismyname\PdoWrapper;
+
+use PDO;
 
 class Database extends PDO
 {
     /**
      * @var array Array of saved databases for reusing
      */
-    protected static $instances = array();
+    protected static $instances = [];
 
     /**
      * Static method get
      *
      * @param  array $group
-     * @return \helpers\database
+     * @return database
      */
-    public static function get($group = false)
+    public static function get(string $username, string $password, string $database, string $host = 'localhost', string $type = 'mysql')
     {
-        // Determining if exists or it's not empty, then use default group defined in config
-        $group = !$group ? array (
-            'type' => DB_TYPE,
-            'host' => DB_HOST,
-            'name' => DB_NAME,
-            'user' => DB_USER,
-            'pass' => DB_PASS
-        ) : $group;
-
-        // Group information
-        $type = $group['type'];
-        $host = $group['host'];
-        $name = $group['name'];
-        $user = $group['user'];
-        $pass = $group['pass'];
-
-        // ID for database based on the group information
-        $id = "$type.$host.$name.$user.$pass";
+        // ID for database based on the credentials
+        $id = "$type.$host.$database.$username.$password";
 
         // Checking if the same
         if (isset(self::$instances[$id])) {
             return self::$instances[$id];
         }
 
-        $instance = new Database("$type:host=$host;dbname=$name;charset=utf8", $user, $pass);
+        $instance = new Database("$type:host=$host;dbname=$database;charset=utf8", $username, $password);
         $instance->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
         // Setting Database into $instances to avoid duplication
@@ -69,7 +56,7 @@ class Database extends PDO
      * @param  string $single    when set will return only 1 record
      * @return array            returns an array of records
      */
-    public function select($sql, $array = array(), $fetchMode = PDO::FETCH_OBJ, $class = '', $single = null)
+    public function select($sql, $array = [], $fetchMode = PDO::FETCH_OBJ, $class = '', $single = null)
     {
          // Append select if it isn't appended.
         if (strtolower(substr($sql, 0, 7)) !== 'select ') {
@@ -102,7 +89,7 @@ class Database extends PDO
      * @param  string $class     class name
      * @return array            returns a single record
      */
-    public function find($sql, $array = array(), $fetchMode = PDO::FETCH_OBJ, $class = '')
+    public function find($sql, $array = [], $fetchMode = PDO::FETCH_OBJ, $class = '')
     {
         return $this->select($sql, $array, $fetchMode, $class, true);
     }
@@ -219,6 +206,13 @@ class Database extends PDO
 
         $stmt->execute();
         return $stmt->rowCount();
+    }
+
+    public function deleteByIds(string $table, string $column, string $ids)
+    {
+        $stmt = $this->prepare("DELETE FROM $table WHERE $column IN ($ids)");
+        $stmt->execute();
+        return $stmt->rowCount();        
     }
 
     /**
