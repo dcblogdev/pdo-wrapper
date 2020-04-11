@@ -31,11 +31,19 @@ $db->select("column FROM table");
 
 To select data based on user data instead of passing the data to the query directly use a prepared statement, this is safer and stops any attempt at sql injections.
 
+**Names placeholders**
+
 ```php
-$db->select("username FROM members WHERE memberID = :id and email = :email", array(':id' => 1, ':email' => 'someone@domain.com'));
+$db->select("username FROM members WHERE id = :id and email = :email", array(':id' => 1, ':email' => 'someone@domain.com'));
 ```
 
-The above query will return the username from the members table where the memberID and email match. The memberID and email is passed seperartly in an array.
+**Annonomus placeholders**
+
+```php
+$db->find("username FROM members WHERE id=? and email =?", [1, 'someone@domain.com']);
+```
+
+The above query will return the username from the members table where the id and email match. The id and email is passed seperartly in an array.
 
 Instead of passing in an id and email to the query directly a placeholder is used :id and :email then an array is passed the keys in the array matches the placeholder and is bound, so the database will get both the query and the bound data.
 
@@ -54,8 +62,16 @@ foreach ($rows as $row) {
 
 Using find() will return only a single result. Like select it accepts params being passed in an array as a second argument.
 
+**Names placeholders**
+
 ```php
 $db->find("column FROM table where id=:id", [':id' => 23]);
+```
+
+**Annonomus placeholders**
+
+```php
+$db->find("column FROM table where id=?", [23]);
 ```
 
 # Raw
@@ -77,11 +93,11 @@ $db->raw("CREATE TABLE IF NOT EXISTS members (
 Data is inserted by calling the insert method it expects the table name followed by an array of key and values to insert in to the database.
 
 ```php
-$data = array(
+$data = [
     'firstName' => 'Joe',
     'lastnName' => 'Smith',
     'email' => 'someone@domain.com'
-);
+];
 $db->insert('members', $data);
 ```
 
@@ -96,25 +112,27 @@ $id = $db->insert('members', $data);
 To update an existing record the update method is called. This method expects the table, array of data to update and a second array containing the where condition.
 
 ```php
-$data = array(
+$data = [
     'firstName' => 'Joe',
     'lastnName' => 'Smith',
     'email' => 'someone@domain.com'
-);
-$where = array('memberID' => 2);
+];
+$where = ['memberID' => 2];
 $db->update('members', $data, $where);
 ```
 Or:
 
 ```php
-$update = array( 
-	'data'=>array(
+$update = [ 
+	'data' => [
 	    'firstName' => 'Joe',
 	    'lastnName' => 'Smith',
 	    'email' => 'someone@domain.com'
-		),
-	'where'=> array('memberID' => 2)
-	);
+	],
+	'where' => [
+        'memberID' => 2
+    ]
+];
 
 $db->update('members', $update['data'], $update['where']);
 
@@ -125,7 +143,7 @@ $db->update('members', $update['data'], $update['where']);
 To delete records call the delete method. This method expects the table name and an array of the where condition.
 
 ```php
-$where = array('memberID' => 2);
+$where = ['memberID' => 2];
 $db->delete('members', $where);
 ```
 
@@ -166,4 +184,3 @@ If table has no column `id`
 ```php
 $db->count('members', 'member_id');
 ```
-
