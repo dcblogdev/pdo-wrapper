@@ -42,9 +42,9 @@ class Database extends PDO
      * @param  string $sql sql command
      * @return none
      */
-    public function raw($sql)
+    public function raw(string $sql)
     {
-        $this->query($sql);
+        $stmt = $this->query($sql);
     }
 
     /**
@@ -56,7 +56,7 @@ class Database extends PDO
      * @param  string $single    when set will return only 1 record
      * @return array            returns an array of records
      */
-    public function select($sql, $array = [], $fetchMode = PDO::FETCH_OBJ, $class = '', $single = null)
+    public function select(string $sql, array $array = [], int $fetchMode = PDO::FETCH_OBJ, string $class = '', bool $single = false)
     {
          // Append select if it isn't appended.
         if (strtolower(substr($sql, 0, 7)) !== 'select ') {
@@ -64,17 +64,24 @@ class Database extends PDO
         }
 
         $stmt = $this->prepare($sql);
-        foreach ($array as $key => $value) {
-            if (is_int($value)) {
-                $stmt->bindValue("$key", $value, PDO::PARAM_INT);
-            } else {
-                $stmt->bindValue("$key", $value);
+
+        //if array has named placeholders
+        if ($this->has_string_keys($array)) {
+            foreach ($array as $key => $value) {
+                if (is_int($value)) {
+                    $stmt->bindValue("$key", $value, PDO::PARAM_INT);
+                } else {
+                    $stmt->bindValue("$key", $value);
+                }
             }
+
+            $stmt->execute();
+        } else {
+            //for ? placeholders pass the array
+            $stmt->execute($array);
         }
 
-        $stmt->execute();
-
-        if ($single == null) {
+        if ($single == false) {
             return $fetchMode === PDO::FETCH_CLASS ? $stmt->fetchAll($fetchMode, $class) : $stmt->fetchAll($fetchMode);
         } else {
             return $fetchMode === PDO::FETCH_CLASS ? $stmt->fetch($fetchMode, $class) : $stmt->fetch($fetchMode);
@@ -91,7 +98,7 @@ class Database extends PDO
      */
     public function find($sql, $array = [], $fetchMode = PDO::FETCH_OBJ, $class = '')
     {
-        return $this->select($sql, $array, $fetchMode, $class, true);
+        return $this->select($sql, $array, $fetchMode, $class, $single = true);
     }
 
     /**
@@ -222,5 +229,15 @@ class Database extends PDO
     public function truncate($table)
     {
         return $this->exec("TRUNCATE TABLE $table");
+    }
+
+    /**
+     * Determine if an array holds string keys 
+     * @param  array   $array 
+     * @return boolean
+     */
+    protected function has_string_keys(array $array) 
+    {
+        return count(array_filter(array_keys($array), 'is_string')) > 0;
     }
 }
