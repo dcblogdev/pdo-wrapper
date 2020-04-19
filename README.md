@@ -2,6 +2,16 @@
 
 This PDO wrapper, is a collection of methods for working with a database this includes selecting, inserting, updating and deleting records.
 
+> Version 2+ has been rewritten for the old docs pleease see [https://github.com/dcblogdev/pdo-wrapper/tree/v1](v1 branch)
+
+Version 2 is now namespaced as `Dcblogdev` instead of `Daveismyname`
+
+Also the methods `get()` and `select()` have been removed.
+
+Instead of ::get() a new instance of the class used `new Database()`
+
+Select has been replaced with `->rows()` and `->row()` or `->run()`
+
 ## Install
 
 Using composer include the repository by typing the following into a terminal
@@ -121,17 +131,23 @@ $db->row("column FROM table where id=:id", ['id' => 23]);
 $db->row("column FROM table where id=?", [23]);
 ```
 
+Another way to select a signle record using the table and id by calling `->getById`
+
+```php
+$db->getById('users', $id);
+```
+
 # Raw
 
 A raw query is a query that is not ran through a prepared statement and will execute the query passed directly. Useful when creating a table.
 
 ```php
-$db->raw("CREATE TABLE IF NOT EXISTS members (
-  memberID INT(11) NOT NULL AUTO_INCREMENT,
+$db->raw("CREATE TABLE IF NOT EXISTS users (
+  id INT(11) NOT NULL AUTO_INCREMENT,
   firstName VARCHAR(255) NOT NULL,
   lastnName VARCHAR(255) NOT NULL,
   email VARCHAR(255) NOT NULL,
-  PRIMARY KEY (memberID))"
+  PRIMARY KEY (id))"
 );
 ```
 
@@ -213,6 +229,22 @@ This will delete a single record to set the limit pass a third parameters contai
 ```php
 $db->delete('users', $where, 10);  //delete 10 records matcing the where
 $db->delete('users', $where, null); //delete all records matching the where
+```
+
+## Delete all
+
+To delete all records for a given table
+
+```php
+$db->deleteAll('users');
+```
+
+## Delete by id
+
+To delete a record by its table and id
+
+```php
+$db->deleteById('users', $id);
 ```
 
 ## Delete multiple IN
