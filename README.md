@@ -2,7 +2,7 @@
 
 This PDO wrapper, is a collection of methods for working with a database this includes selecting, inserting, updating and deleting records.
 
-> Version 2+ has been rewritten for the old docs pleease see [https://github.com/dcblogdev/pdo-wrapper/tree/v1](v1 branch)
+> Version 2+ has been rewritten for the old docs pleease see [v1 branch](https://github.com/dcblogdev/pdo-wrapper/tree/v1)
 
 Version 2 is now namespaced as `Dcblogdev` instead of `Daveismyname`
 
