@@ -1,58 +1,105 @@
 # PDO Wrapper
 
-This PDO wrapper, is a collection of crud methods for working with a database this includes selecting, inserting, updating and deleting records.
+This PDO wrapper, is a collection of methods for working with a database this includes selecting, inserting, updating and deleting records.
 
 ## Install
 
 Using composer include the repository by typing the following into a terminal
 
 ```
-composer require daveismyname/pdo-wrapper
+composer require dcblogdev/pdo-wrapper
 ```
 
-Set the db credentials. Finally create an instance of the classes by calling it's get method.
-
-This wrapper makes use of a single database connection further connections attempts will reuse the already open connections, if not already connected.
+Set the db credentials. Finally create an instance of the classes.
 
 ```php
-use Daveismyname\PdoWrapper\Database;
+use Dcblogdev\PdoWrapper\Database;
 
 // make a connection to mysql here
-$db = Database::get($username, $password, $database, $host = 'localhost', $type = 'mysql');
+$options = [
+    //required
+    'username' => '',
+    'database' => '',
+    //optional
+    'password' => '',
+    'type' => 'mysql',
+    'charset' => 'utf8',
+    'host' => 'localhost',
+    'port' => '3309'
+];
+
+$db = new Database($options);
 ```
 
 # Usage examples
 
-## Select:
+## Accessing PDO
+
+You can call getPdo()` to get access to PDO directly:
 
 ```php
-$db->select("column FROM table");
+$db->getPdo()
 ```
 
-To select data based on user data instead of passing the data to the query directly use a prepared statement, this is safer and stops any attempt at sql injections.
+This allows to chain calls:
+
+```php
+$db->getPdo()->query($sql)->fetch();
+```
+
+
+## querying:
+
+All quries use prepared statements, calling `->run()` returns a PDO option that can be chained:
+
+Select multiple records:
+
+```php
+$db->run("select * FROM users")->fetchAll();
+```
+
+Select a single record:
+
+```php
+$db->run("select * FROM users")->fetch();
+```
+
+Select multiple records using `->rows`
+
+```php
+$db->rows("select * FROM table");
+```
+
+Select single record using `->row`
+
+```php
+$db->row("select * FROM table");
+```
+
+To select records based on user data instead of passing the data to the query directly use a prepared statement, this is safer and stops any attempt at sql injections.
 
 **Names placeholders**
 
 ```php
-$db->select("username FROM members WHERE id = :id and email = :email", array(':id' => 1, ':email' => 'someone@domain.com'));
+$db->row("select username FROM users WHERE id = :id and email = :email", ['id' => 1, ':email' => 'someone@domain.com']);
 ```
 
 **Annonomus placeholders**
 
 ```php
-$db->find("username FROM members WHERE id=? and email =?", [1, 'someone@domain.com']);
+$db->row("select username FROM users WHERE id = ? and email = ?", [1, 'someone@domain.com']);
 ```
 
-The above query will return the username from the members table where the id and email match. The id and email is passed seperartly in an array.
+The above query will return the username from a users table where the id and email match. The id and email is passed seperartly in an array.
 
-Instead of passing in an id and email to the query directly a placeholder is used :id and :email then an array is passed the keys in the array matches the placeholder and is bound, so the database will get both the query and the bound data.
+Instead of passing in an id and email to the query directly a placeholder is used :id and :email (or ? can be used) then an array is passed the keys in the array matches the placeholder and is bound, so the database will get both the query and the bound data.
 
-Data returned from the query will be returns as an object this can be changed by passing a third param to the select containing PDO::FETCH_ASSOC.
+Data returned from the query will be returns as an object this can be changed by passing a third param containing PDO::FETCH_ASSOC.
 
 To use the object loop through it, a typical example:
 
 ```php
-$rows = $db->select("firstName, lastName FROM members ORDER BY firstName, lastName");
+$rows = $db->rows("firstName, lastName FROM username ORDER BY firstName, lastName");
 foreach ($rows as $row) {
     echo "<p>$row->firstName $row->lastName</p>";
 }
@@ -60,18 +107,18 @@ foreach ($rows as $row) {
 
 ## Select Single Record:
 
-Using find() will return only a single result. Like select it accepts params being passed in an array as a second argument.
+Using row() will return only a single result. Like rows it accepts params being passed in an array as a second argument.
 
 **Names placeholders**
 
 ```php
-$db->find("column FROM table where id=:id", [':id' => 23]);
+$db->row("column FROM table where id=:id", ['id' => 23]);
 ```
 
 **Annonomus placeholders**
 
 ```php
-$db->find("column FROM table where id=?", [23]);
+$db->row("column FROM table where id=?", [23]);
 ```
 
 # Raw
@@ -88,6 +135,20 @@ $db->raw("CREATE TABLE IF NOT EXISTS members (
 );
 ```
 
+## Count
+
+To count records call the count method. This method expects the table name and column name (optional).
+
+```php
+$db->count('users');
+```
+
+If table has no column `id`
+
+```php
+$db->count('users', 'user_id');
+```
+
 ## Insert
 
 Data is inserted by calling the insert method it expects the table name followed by an array of key and values to insert in to the database.
@@ -98,13 +159,13 @@ $data = [
     'lastnName' => 'Smith',
     'email' => 'someone@domain.com'
 ];
-$db->insert('members', $data);
+$db->insert('users', $data);
 ```
 
 The insert automatically returns the last inserted id by returning 'lastInsertId' to collect the id:
 
 ```php
-$id = $db->insert('members', $data);
+$id = $db->insert('users', $data);
 ```
 
 ## Updating
@@ -117,8 +178,8 @@ $data = [
     'lastnName' => 'Smith',
     'email' => 'someone@domain.com'
 ];
-$where = ['memberID' => 2];
-$db->update('members', $data, $where);
+$where = ['id' => 2];
+$db->update('users', $data, $where);
 ```
 Or:
 
@@ -130,11 +191,11 @@ $update = [
 	    'email' => 'someone@domain.com'
 	],
 	'where' => [
-        'memberID' => 2
+        'id' => 2
     ]
 ];
 
-$db->update('members', $update['data'], $update['where']);
+$db->update('users', $update['data'], $update['where']);
 
 ```
 
@@ -143,15 +204,15 @@ $db->update('members', $update['data'], $update['where']);
 To delete records call the delete method. This method expects the table name and an array of the where condition.
 
 ```php
-$where = ['memberID' => 2];
-$db->delete('members', $where);
+$where = ['id' => 2];
+$db->delete('users', $where);
 ```
 
 This will delete a single record to set the limit pass a third parameters containing the number to limit to, or to remove the limit pass null as a third param.
 
 ```php
-$db->delete('members', $where, 10);  //delete 10 records matcing the where
-$db->delete('members', $where, null); //delete all records matching the where
+$db->delete('users', $where, 10);  //delete 10 records matcing the where
+$db->delete('users', $where, null); //delete all records matching the where
 ```
 
 ## Delete multiple IN
@@ -167,20 +228,5 @@ $db->deleteByIds('users', 'id', '4,5,6');
 To empty a table of all contents call the truncate method. Passing only the table name.
 
 ```php
-$db->truncate('members');
-```
-
-
-## Count
-
-To count records call the count method. This method expects the table name and column name (optional).
-
-```php
-$db->count('members');
-```
-
-If table has no column `id`
-
-```php
-$db->count('members', 'member_id');
+$db->truncate('users');
 ```
