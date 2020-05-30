@@ -1,285 +1,227 @@
 <?php
-namespace Dcblogdev\PdoWrapper;
 
-use PDO;
-use Exception;
-
-/**
- * Wrapper for PDO
- */
-class Database
+class Database extends PDO
 {
     /**
-     * hold database connection
+     * @var array Array of saved databases for reusing
      */
-    protected $db;
+    protected static $instances = [];
 
     /**
-     * Array of connection arguments
-     * 
-     * @param array $args
+     * Static method get
+     *
+     * @param  array $group
+     * @return database
      */
-    public function __construct($args)
+    public static function get(string $username, string $password, string $database, string $host = 'localhost', string $type = 'mysql')
     {
-        if (!isset($args['database'])) {
-            throw new Exception('&args[\'database\'] is required');
+        // ID for database based on the credentials
+        $id = "$type.$host.$database.$username.$password";
+
+        // Checking if the same
+        if (isset(self::$instances[$id])) {
+            return self::$instances[$id];
         }
 
-        if (!isset($args['username'])) {
-            throw new Exception('&args[\'username\']  is required');
+        if ($type == 'mssql') {
+            $instance = new Database("sqlsrv:server=$host; database=$database", $username, $password);
+        } else {
+           $instance = new Database("$type:host=$host; dbname=$database; charset=utf8", $username, $password); 
         }
+        
+        $instance->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-        $type     = isset($args['type']) ? $args['type'] : 'mysql';
-        $host     = isset($args['host']) ? $args['host'] : 'localhost';
-        $charset  = isset($args['charset']) ? $args['charset'] : 'utf8';
-        $port     = isset($args['port']) ? 'port=' . $args['port'] . ';' : '';
-        $password = isset($args['password']) ? $args['password'] : '';
-        $database = $args['database'];
-        $username = $args['username'];
+        // Setting Database into $instances to avoid duplication
+        self::$instances[$id] = $instance;
 
-        $this->db = new PDO("$type:host=$host;$port" . "dbname=$database;charset=$charset", $username, $password);
-        $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        //return the pdo instance
+        return $instance;
     }
 
     /**
-     * get PDO instance
-     * 
-     * @return $db PDO instance
-     */
-    public function getPdo()
-    {
-        return $this->db;
-    }
-
-    /**
-     * Run raw sql query 
-     * 
-     * @param  string $sql       sql query
-     * @return void
+     * run raw sql queries
+     * @param  string $sql sql command
+     * @return none
      */
     public function raw($sql)
     {
-        $this->db->query($sql);
+        $this->query($sql);
     }
 
     /**
-     * Run sql query
-     * 
+     * method for selecting records from a database
      * @param  string $sql       sql query
-     * @param  array  $args      params
-     * @return object            returns a PDO object
+     * @param  array  $array     named params
+     * @param  object $fetchMode
+     * @param  string $class     class name
+     * @param  string $single    when set will return only 1 record
+     * @return array            returns an array of records
      */
-    public function run($sql, $args = [])
+    public function select($sql, $array = [], $fetchMode = PDO::FETCH_OBJ, $class = '', $single = null)
     {
-        if (empty($args)) {
-            return $this->db->query($sql);
+         // Append select if it isn't appended.
+        if (strtolower(substr($sql, 0, 7)) !== 'select ') {
+            $sql = "SELECT " . $sql;
         }
 
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute($args);
+        $stmt = $this->prepare($sql);
+        foreach ($array as $key => $value) {
+            if (is_int($value)) {
+                $stmt->bindValue("$key", $value, PDO::PARAM_INT);
+            } else {
+                $stmt->bindValue("$key", $value);
+            }
+        }
 
-        return $stmt;
+        $stmt->execute();
+
+        if ($single == null) {
+            return $fetchMode === PDO::FETCH_CLASS ? $stmt->fetchAll($fetchMode, $class) : $stmt->fetchAll($fetchMode);
+        } else {
+            return $fetchMode === PDO::FETCH_CLASS ? $stmt->fetch($fetchMode, $class) : $stmt->fetch($fetchMode);
+        }
     }
 
     /**
-     * Get arrrays of records
-     * 
+     * Fetch a single record
      * @param  string $sql       sql query
-     * @param  array  $args      params
-     * @param  object $fetchMode set return mode ie object or array
-     * @return object            returns multiple records
+     * @param  array  $array     named params
+     * @param  object $fetchMode
+     * @param  string $class     class name
+     * @return array            returns a single record
      */
-    public function rows($sql, $args = [], $fetchMode = PDO::FETCH_OBJ)
+    public function find($sql, $array = [], $fetchMode = PDO::FETCH_OBJ, $class = '')
     {
-        return $this->run($sql, $args)->fetchAll($fetchMode);
+        return $this->select($sql, $array, $fetchMode, $class, true);
     }
 
     /**
-     * Get arrray of records
-     * 
-     * @param  string $sql       sql query
-     * @param  array  $args      params
-     * @param  object $fetchMode set return mode ie object or array
-     * @return object            returns single record
-     */
-    public function row($sql, $args = [], $fetchMode = PDO::FETCH_OBJ)
+    * Count method
+    * @param  string $table table name
+    * @param  string $column optional
+    */
+    public function count($table, $column= 'id')
     {
-        return $this->run($sql, $args, $fetchMode)->fetch($fetchMode);
+        $stmt = $this->query("SELECT $column FROM $table");
+        $stmt->execute();
+        return $stmt->rowCount();
     }
 
     /**
-     * Get record by id
-     * 
-     * @param  string $table     name of table
-     * @param  integer $id       id of record
-     * @param  object $fetchMode set return mode ie object or array
-     * @return object            returns single record
-     */
-    public function getById($table, $id, $fetchMode = PDO::FETCH_OBJ)
-    {
-        return $this->run("SELECT * FROM $table WHERE id = ?", [$id])->fetch($fetchMode);
-    }
-
-    /**
-     * Get number of records
-     * 
-     * @param  string $sql       sql query
-     * @param  array  $args      params
-     * @param  object $fetchMode set return mode ie object or array
-     * @return integer           returns number of records
-     */
-    public function count($sql, $args = [])
-    {
-        return $this->run($sql, $args)->rowCount();
-    }
-
-    /**
-     * Get primary key of last inserted record
-     */
-    public function lastInsertId()
-    {
-        return $this->db->lastInsertId();
-    }
-
-    /**
-     * insert record
-     * 
+     * insert method
      * @param  string $table table name
      * @param  array $data  array of columns and values
      */
     public function insert($table, $data)
     {
-        //add columns into comma seperated string
-        $columns = implode(',', array_keys($data));
+        ksort($data);
 
-        //get values
-        $values = array_values($data);
+        $fieldNames = implode(',', array_keys($data));
+        $fieldValues = ':'.implode(', :', array_keys($data));
 
-        $placeholders = array_map(function ($val) {
-            return '?';
-        }, array_keys($data));
+        $stmt = $this->prepare("INSERT INTO $table ($fieldNames) VALUES ($fieldValues)");
 
-        //convert array into comma seperated string
-        $placeholders = implode(',', array_values($placeholders));
+        foreach ($data as $key => $value) {
+            $stmt->bindValue(":$key", $value);
+        }
 
-        $this->run("INSERT INTO $table ($columns) VALUES ($placeholders)", $values);
-
+        $stmt->execute();
         return $this->lastInsertId();
     }
 
     /**
-     * update record
-     * 
+     * update method
      * @param  string $table table name
      * @param  array $data  array of columns and values
      * @param  array $where array of columns and values
      */
     public function update($table, $data, $where)
     {
-        //merge data and where together
-        $collection = array_merge($data, $where);
+        ksort($data);
 
-        //collect the values from collection
-        $values = array_values($collection);
-
-        //setup fields
         $fieldDetails = null;
         foreach ($data as $key => $value) {
-            $fieldDetails .= "$key = ?,";
+            $fieldDetails .= "$key = :d_$key,";
         }
         $fieldDetails = rtrim($fieldDetails, ',');
 
-        //setup where 
         $whereDetails = null;
         $i = 0;
         foreach ($where as $key => $value) {
-            $whereDetails .= $i == 0 ? "$key = ?" : " AND $key = ?";
+            if ($i == 0) {
+                $whereDetails .= "$key = :w_$key";
+            } else {
+                $whereDetails .= " AND $key = :w_$key";
+            }
             $i++;
         }
+        $whereDetails = ltrim($whereDetails, ' AND ');
 
-        $stmt = $this->run("UPDATE $table SET $fieldDetails WHERE $whereDetails", $values);
+        $stmt = $this->prepare("UPDATE $table SET $fieldDetails WHERE $whereDetails");
 
+        foreach ($data as $key => $value) {
+            $stmt->bindValue(":d_$key", $value);
+        }
+
+        foreach ($where as $key => $value) {
+            $stmt->bindValue(":w_$key", $value);
+        }
+
+        $stmt->execute();
         return $stmt->rowCount();
     }
 
     /**
-     * Delete records
-     * 
+     * Delete method
      * @param  string $table table name
+     * @param  array $data  array of columns and values
      * @param  array $where array of columns and values
      * @param  integer $limit limit number of records
      */
     public function delete($table, $where, $limit = 1)
     {
-        //collect the values from collection
-        $values = array_values($where);
+        ksort($where);
 
-        //setup where 
         $whereDetails = null;
         $i = 0;
         foreach ($where as $key => $value) {
-            $whereDetails .= $i == 0 ? "$key = ?" : " AND $key = ?";
+            if ($i == 0) {
+                $whereDetails .= "$key = :$key";
+            } else {
+                $whereDetails .= " AND $key = :$key";
+            }
             $i++;
         }
+        $whereDetails = ltrim($whereDetails, ' AND ');
 
         //if limit is a number use a limit on the query
         if (is_numeric($limit)) {
-            $limit = "LIMIT $limit";
+            $uselimit = "LIMIT $limit";
         }
 
-        $stmt = $this->run("DELETE FROM $table WHERE $whereDetails $limit", $values);
+        $stmt = $this->prepare("DELETE FROM $table WHERE $whereDetails $uselimit");
 
+        foreach ($where as $key => $value) {
+            $stmt->bindValue(":$key", $value);
+        }
+
+        $stmt->execute();
         return $stmt->rowCount();
     }
 
-    /**
-     * Delete all records records
-     * 
-     * @param  string $table table name
-     */
-    public function deleteAll($table)
-    {
-        $stmt = $this->run("DELETE FROM $table");
-
-        return $stmt->rowCount();
-    }
-
-    /**
-     * Delete record by id
-     * 
-     * @param  string $table table name
-     * @param  integer $id id of record
-     */
-    public function deleteById($table, $id)
-    {
-        $stmt = $this->run("DELETE FROM $table WHERE id = ?", [$id]);
-
-        return $stmt->rowCount();
-    }
-
-    /**
-     * Delete record by ids
-     * 
-     * @param  string $table table name
-     * @param  string $column name of column
-     * @param  string $ids ids of records
-     */
     public function deleteByIds(string $table, string $column, string $ids)
     {
-        $stmt = $this->run("DELETE FROM $table WHERE $column IN ($ids)");
-
-        return $stmt->rowCount();
+        $stmt = $this->prepare("DELETE FROM $table WHERE $column IN ($ids)");
+        $stmt->execute();
+        return $stmt->rowCount();        
     }
 
     /**
      * truncate table
-     * 
      * @param  string $table table name
      */
     public function truncate($table)
     {
-        $stmt = $this->run("TRUNCATE TABLE $table");
-
-        return $stmt->rowCount();
+        return $this->exec("TRUNCATE TABLE $table");
     }
 }
