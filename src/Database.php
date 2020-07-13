@@ -104,7 +104,7 @@ class Database
      */
     public function row($sql, $args = [], $fetchMode = PDO::FETCH_OBJ)
     {
-        return $this->run($sql, $args, $fetchMode)->fetch($fetchMode);
+        return $this->run($sql, $args)->fetch($fetchMode);
     }
 
     /**
