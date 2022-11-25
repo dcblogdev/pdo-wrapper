@@ -76,8 +76,25 @@ class Database
         }
 
         $stmt = $this->db->prepare($sql);
-        $stmt->execute($args);
-
+        
+        //check if args is associative or sequential?
+        $is_assoc = (array() === $args) ? false : array_keys($args) !== range(0, count($args) - 1);
+        if ($is_assoc)
+        {
+            foreach ($args as $key => $value) {
+                if (is_int($value)) {
+                    $stmt->bindValue(":$key", $value, PDO::PARAM_INT);
+                } else {
+                    $stmt->bindValue(":$key", $value);
+                }
+            }
+            $stmt->execute();
+        }
+        else
+        {
+            $stmt->execute($args);
+        }
+        
         return $stmt;
     }
 
