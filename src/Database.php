@@ -193,29 +193,28 @@ class Database
      */
     public function update($table, $data, $where)
     {
-        //merge data and where together
-        $collection = array_merge($data, $where);
-
-        //collect the values from collection
-        $values = array_values($collection);
-
+        //collect the values from data and where
+        $values = [];
+        
         //setup fields
         $fieldDetails = null;
         foreach ($data as $key => $value) {
             $fieldDetails .= "$key = ?,";
+            $values[] = $value;
         }
         $fieldDetails = rtrim($fieldDetails, ',');
-
+        
         //setup where 
         $whereDetails = null;
         $i = 0;
         foreach ($where as $key => $value) {
             $whereDetails .= $i == 0 ? "$key = ?" : " AND $key = ?";
+            $values[] = $value;
             $i++;
         }
-
+        
         $stmt = $this->run("UPDATE $table SET $fieldDetails WHERE $whereDetails", $values);
-
+        
         return $stmt->rowCount();
     }
 
