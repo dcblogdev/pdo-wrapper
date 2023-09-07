@@ -84,7 +84,7 @@ $db->deleteById('posts', 2);
 $db->deleteById('posts', '2,4,7');
 
 //truncate table
-$eb->truncate('posts');
+$db->truncate('posts');
 ```
 
 ## Install
