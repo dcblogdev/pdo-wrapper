@@ -166,8 +166,13 @@ class Database
      */
     public function insert($table, $data)
     {
+        // enclose columns in backticks
+        $columns = array_map(function($column) {
+            return '`' . trim($column, '`') . '`';
+        }, array_keys($data));
+
         //add columns into comma seperated string
-        $columns = implode(',', array_keys($data));
+        $columns = implode(', ', $columns);
 
         //get values
         $values = array_values($data);
