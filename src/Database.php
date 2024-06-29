@@ -166,8 +166,13 @@ class Database
      */
     public function insert($table, $data)
     {
+        // enclose columns in backticks
+        $columns = array_map(function($column) {
+            return '`' . trim($column, '`') . '`';
+        }, array_keys($data));
+
         //add columns into comma seperated string
-        $columns = implode(',', array_keys($data));
+        $columns = implode(',', $columns);
 
         //get values
         $values = array_values($data);
@@ -199,6 +204,7 @@ class Database
         //setup fields
         $fieldDetails = null;
         foreach ($data as $key => $value) {
+            $key = '`' . trim($key, '`') . '`';
             $fieldDetails .= "$key = ?,";
             $values[] = $value;
         }
@@ -208,6 +214,7 @@ class Database
         $whereDetails = null;
         $i = 0;
         foreach ($where as $key => $value) {
+            $key = '`' . trim($key, '`') . '`';
             $whereDetails .= $i == 0 ? "$key = ?" : " AND $key = ?";
             $values[] = $value;
             $i++;
@@ -234,6 +241,7 @@ class Database
         $whereDetails = null;
         $i = 0;
         foreach ($where as $key => $value) {
+            $key = '`' . trim($key, '`') . '`';
             $whereDetails .= $i == 0 ? "$key = ?" : " AND $key = ?";
             $i++;
         }
